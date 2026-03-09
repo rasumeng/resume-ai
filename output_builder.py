@@ -1,3 +1,22 @@
+from input_parser import parse_section
+from prompts import bullet_polish_prompt
+from llm_client import ask_llm
+
+SECTIONS_TO_POLISH = ["WORK EXPERIENCE", "PROJECTS", "LEADERSHIP"]
+
+
+def build_resume(sections: dict) -> dict:
+    improved_sections = {}
+    for section, content in sections.items():
+        if section in SECTIONS_TO_POLISH:
+            prompt = bullet_polish_prompt(content)
+            polished_content = ask_llm(prompt)
+            polished_content = clean_bullets(polished_content)
+            improved_sections[section] = polished_content
+        else:
+            improved_sections[section] = content
+    return improved_sections    
+
 def clean_bullets(text: str) -> str:
     lines = text.strip().split("\n")
     cleaned = []
@@ -9,3 +28,15 @@ def clean_bullets(text: str) -> str:
                 line = "- " + line[2:].strip()
             cleaned.append(line)
     return "\n".join(cleaned)
+
+if __name__ == "__main__":
+    from input_parser import load_resume
+    
+    text = load_resume("samples/resume.txt")
+    sections = parse_section(text)
+    improved = build_resume(sections)
+    
+    for header, content in improved.items():
+        print(f"--- {header} ---")
+        print(content)
+        print()
